@@ -1,0 +1,40 @@
+version: "3.8"
+
+services:
+  esensi-dashboard:
+    image: esensi-dashboard:latest
+    container_name: esensi-dashboard
+    restart: unless-stopped
+    environment:
+      # Database configuration
+      - DB_HOST=host.docker.internal
+      - DB_PORT=5432
+      - DB_NAME=esensi_db
+      - DB_USER=dashboard_reader
+      - DB_PASSWORD=changeme
+      # Authentication
+      - DASHBOARD_USERNAME=admin
+      - DASHBOARD_PASSWORD=supersecret
+      # Session
+      - SESSION_SECRET=my-super-secret-session-key
+      # Application
+      - PORT=3000
+      - NODE_ENV=production
+    ports:
+      # For testing without Traefik - access via http://localhost:8085
+      - "8085:3000"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - traefik_proxy
+    labels:
+      - "traefik.enable=true"
+      # TODO: replace TBD_DOMAIN with real domain when available
+      - "traefik.http.routers.esensi-dashboard.rule=Host(`TBD_DOMAIN`)"
+      - "traefik.http.routers.esensi-dashboard.entrypoints=websecure"
+      - "traefik.http.routers.esensi-dashboard.tls.certresolver=letsencrypt"
+      - "traefik.http.services.esensi-dashboard.loadbalancer.server.port=3000"
+
+networks:
+  traefik_proxy:
+    external: true

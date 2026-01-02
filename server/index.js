@@ -47,8 +47,8 @@ if (NODE_ENV === 'production') {
   const distPath = path.join(__dirname, '../dist');
   app.use(express.static(distPath));
   
-  // Handle client-side routing
-  app.get('*', (req, res) => {
+  // Handle client-side routing for SPA
+  app.get('/', (req, res) => {
     res.sendFile(path.join(distPath, 'index.html'));
   });
 }
