@@ -89,30 +89,30 @@ export default function Dashboard() {
           <KPICard
             title="Total Leads"
             value={kpiData?.totalLeads}
-            subtitle="All time"
+            subtitle="Filtered results"
             loading={kpiLoading}
             error={kpiError}
           />
           <KPICard
-            title="Leads (7 Days)"
-            value={kpiData?.leads7Days}
-            subtitle="Last week"
+            title="Avg Response Time"
+            value={kpiData?.avgResponseMinutes ? `${kpiData.avgResponseMinutes} min` : 'N/A'}
+            subtitle="Average reply time"
             loading={kpiLoading}
             error={kpiError}
           />
           <KPICard
-            title="Leads (30 Days)"
-            value={kpiData?.leads30Days}
-            subtitle="Last month"
+            title="Slow Responses"
+            value={kpiData?.slowResponseCount}
+            subtitle="Over 1 hour"
             loading={kpiLoading}
             error={kpiError}
           />
           <KPICard
-            title="Qualified Ratio"
-            value={kpiData?.qualifiedRatio}
-            subtitle="Coming soon"
-            loading={kpiLoading}
-            error={kpiError}
+            title=""
+            value=""
+            subtitle=""
+            loading={false}
+            error={null}
           />
         </div>
 

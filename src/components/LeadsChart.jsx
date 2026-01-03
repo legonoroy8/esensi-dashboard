@@ -61,6 +61,22 @@ export default function LeadsChart({ filters = {} }) {
     }
   };
 
+  // Generate dynamic title based on filters
+  const getChartTitle = () => {
+    if (filters.start_date && filters.end_date) {
+      const start = new Date(filters.start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+      const end = new Date(filters.end_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+      return `Leads Over Time (${start} - ${end})`;
+    } else if (filters.start_date) {
+      const start = new Date(filters.start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+      return `Leads Over Time (From ${start})`;
+    } else if (filters.end_date) {
+      const end = new Date(filters.end_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+      return `Leads Over Time (Until ${end})`;
+    }
+    return 'Leads Over Time (Last 30 Days)';
+  };
+
   const options = {
     responsive: true,
     maintainAspectRatio: false,
@@ -70,7 +86,7 @@ export default function LeadsChart({ filters = {} }) {
       },
       title: {
         display: true,
-        text: 'Leads Over Time (Last 30 Days)',
+        text: getChartTitle(),
         font: {
           size: 16,
           weight: 'bold',

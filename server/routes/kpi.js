@@ -10,46 +10,83 @@ router.use(requireAuth);
 // GET /api/kpi/summary - Get summary KPIs
 router.get('/summary', async (req, res) => {
   try {
-    const { client_id } = req.query;
+    const { client_id, sales_rep_id, start_date, end_date } = req.query;
 
-    // Total leads (all time)
+    // Build WHERE conditions for leads table
+    const conditions = [];
+    const params = [];
+    let paramIndex = 1;
+
+    if (client_id) {
+      conditions.push(`l.client_id::text = $${paramIndex}`);
+      params.push(client_id);
+      paramIndex++;
+    }
+
+    if (sales_rep_id) {
+      conditions.push(`l.sales_rep_id::text = $${paramIndex}`);
+      params.push(sales_rep_id);
+      paramIndex++;
+    }
+
+    if (start_date) {
+      conditions.push(`l.created_at >= $${paramIndex}`);
+      params.push(start_date);
+      paramIndex++;
+    }
+
+    if (end_date) {
+      conditions.push(`l.created_at < $${paramIndex}`);
+      params.push(end_date);
+      paramIndex++;
+    }
+
+    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+
+    // 1. Total leads
     const totalLeadsQuery = `
       SELECT COUNT(*) as total
-      FROM public.leads
-      WHERE ($1::text IS NULL OR client_id::text = $1::text)
+      FROM public.leads l
+      ${whereClause}
     `;
-    const totalResult = await pool.query(totalLeadsQuery, [client_id || null]);
+    const totalResult = await pool.query(totalLeadsQuery, params);
     const totalLeads = parseInt(totalResult.rows[0].total);
 
-    // Leads last 7 days
-    const leads7DaysQuery = `
-      SELECT COUNT(*) as total
-      FROM public.leads
-      WHERE created_at >= NOW() - INTERVAL '7 days'
-        AND ($1::text IS NULL OR client_id::text = $1::text)
+    // 2. Average response time (in minutes)
+    // Calculate: sales_rep_replied_at - ai_report_sent_at
+    const avgResponseTimeQuery = `
+      SELECT 
+        AVG(
+          EXTRACT(EPOCH FROM (le.sales_rep_replied_at - le.ai_report_sent_at)) / 60
+        ) as avg_minutes
+      FROM public.lead_events le
+      INNER JOIN public.leads l ON l.id = le.lead_id
+      WHERE le.ai_report_sent_at IS NOT NULL
+        AND le.sales_rep_replied_at IS NOT NULL
+        ${conditions.length > 0 ? 'AND ' + conditions.join(' AND ') : ''}
     `;
-    const leads7Result = await pool.query(leads7DaysQuery, [client_id || null]);
-    const leads7Days = parseInt(leads7Result.rows[0].total);
+    const avgResponseResult = await pool.query(avgResponseTimeQuery, params);
+    const avgResponseMinutes = avgResponseResult.rows[0].avg_minutes 
+      ? parseFloat(avgResponseResult.rows[0].avg_minutes).toFixed(2)
+      : null;
 
-    // Leads last 30 days
-    const leads30DaysQuery = `
-      SELECT COUNT(*) as total
-      FROM public.leads
-      WHERE created_at >= NOW() - INTERVAL '30 days'
-        AND ($1::text IS NULL OR client_id::text = $1::text)
+    // 3. Count of response times > 1 hour
+    const slowResponseQuery = `
+      SELECT COUNT(*) as count
+      FROM public.lead_events le
+      INNER JOIN public.leads l ON l.id = le.lead_id
+      WHERE le.ai_report_sent_at IS NOT NULL
+        AND le.sales_rep_replied_at IS NOT NULL
+        AND (le.sales_rep_replied_at - le.ai_report_sent_at) > INTERVAL '1 hour'
+        ${conditions.length > 0 ? 'AND ' + conditions.join(' AND ') : ''}
     `;
-    const leads30Result = await pool.query(leads30DaysQuery, [client_id || null]);
-    const leads30Days = parseInt(leads30Result.rows[0].total);
-
-    // Qualified vs unqualified ratio (if qualification field exists)
-    // For now, return 0 as spec says it may not be implemented yet
-    const qualifiedRatio = 0;
+    const slowResponseResult = await pool.query(slowResponseQuery, params);
+    const slowResponseCount = parseInt(slowResponseResult.rows[0].count);
 
     res.json({
       totalLeads,
-      leads7Days,
-      leads30Days,
-      qualifiedRatio
+      avgResponseMinutes,
+      slowResponseCount
     });
   } catch (error) {
     console.error('Error fetching KPI summary:', error);
