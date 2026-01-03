@@ -16,7 +16,7 @@ router.get('/summary', async (req, res) => {
     const totalLeadsQuery = `
       SELECT COUNT(*) as total
       FROM public.leads
-      WHERE ($1 IS NULL OR client_id::text = $1)
+      WHERE ($1::text IS NULL OR client_id::text = $1::text)
     `;
     const totalResult = await pool.query(totalLeadsQuery, [client_id || null]);
     const totalLeads = parseInt(totalResult.rows[0].total);
@@ -26,7 +26,7 @@ router.get('/summary', async (req, res) => {
       SELECT COUNT(*) as total
       FROM public.leads
       WHERE created_at >= NOW() - INTERVAL '7 days'
-        AND ($1 IS NULL OR client_id::text = $1)
+        AND ($1::text IS NULL OR client_id::text = $1::text)
     `;
     const leads7Result = await pool.query(leads7DaysQuery, [client_id || null]);
     const leads7Days = parseInt(leads7Result.rows[0].total);
@@ -36,7 +36,7 @@ router.get('/summary', async (req, res) => {
       SELECT COUNT(*) as total
       FROM public.leads
       WHERE created_at >= NOW() - INTERVAL '30 days'
-        AND ($1 IS NULL OR client_id::text = $1)
+        AND ($1::text IS NULL OR client_id::text = $1::text)
     `;
     const leads30Result = await pool.query(leads30DaysQuery, [client_id || null]);
     const leads30Days = parseInt(leads30Result.rows[0].total);
@@ -77,7 +77,7 @@ router.get('/leads-per-client', async (req, res) => {
       JOIN public.clients c ON c.id = l.client_id
       WHERE l.created_at >= $1
         AND l.created_at < $2
-        AND ($3 IS NULL OR l.client_id::text = $3)
+        AND ($3::text IS NULL OR l.client_id::text = $3::text)
       GROUP BY c.id, c.name
       ORDER BY lead_count DESC
     `;
@@ -113,8 +113,8 @@ router.get('/leads-per-sales-rep', async (req, res) => {
       LEFT JOIN public.sales_reps sr ON sr.id = l.sales_rep_id
       WHERE l.created_at >= $1
         AND l.created_at < $2
-        AND ($3 IS NULL OR l.client_id::text = $3)
-        AND ($4 IS NULL OR l.sales_rep_id::text = $4)
+        AND ($3::text IS NULL OR l.client_id::text = $3::text)
+        AND ($4::text IS NULL OR l.sales_rep_id::text = $4::text)
       GROUP BY c.id, c.name, sr.id, sr.name
       ORDER BY c.name, lead_count DESC
     `;

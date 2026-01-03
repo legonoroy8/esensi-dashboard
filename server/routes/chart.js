@@ -23,7 +23,7 @@ router.get('/leads-over-time', async (req, res) => {
       FROM public.leads
       WHERE created_at >= $1
         AND created_at < $2
-        AND ($3 IS NULL OR client_id::text = $3)
+        AND ($3::text IS NULL OR client_id::text = $3::text)
       GROUP BY DATE(created_at)
       ORDER BY date ASC
     `;
