@@ -9,6 +9,7 @@ import {
   Title,
   Tooltip,
   Legend,
+  Filler,
 } from 'chart.js';
 import { Line } from 'react-chartjs-2';
 import api from '../lib/api';
@@ -22,7 +23,8 @@ ChartJS.register(
   BarElement,
   Title,
   Tooltip,
-  Legend
+  Legend,
+  Filler
 );
 
 export default function LeadsChart() {
