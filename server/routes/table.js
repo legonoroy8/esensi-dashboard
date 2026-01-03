@@ -21,13 +21,13 @@ router.get('/recent-leads', async (req, res) => {
     let paramIndex = 1;
 
     if (client_id) {
-      conditions.push(`l.client_id = $${paramIndex}`);
+      conditions.push(`l.client_id::text = $${paramIndex}`);
       params.push(client_id);
       paramIndex++;
     }
 
     if (sales_rep_id) {
-      conditions.push(`l.sales_rep_id = $${paramIndex}`);
+      conditions.push(`l.sales_rep_id::text = $${paramIndex}`);
       params.push(sales_rep_id);
       paramIndex++;
     }

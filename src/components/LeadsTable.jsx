@@ -107,7 +107,7 @@ export default function LeadsTable() {
             {leads.map((lead, index) => (
               <tr
                 key={lead.id}
-                className={`hover:bg-slate-50 ${index % 2 === 0 ? 'bg-white' : 'bg-slate-25'}`}
+                className={`hover:bg-slate-50 ${index % 2 === 0 ? 'bg-white' : 'bg-slate-50'}`}
               >
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">
                   {lead.created_at}
