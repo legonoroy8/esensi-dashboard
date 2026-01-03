@@ -25,31 +25,42 @@ if (TRUST_PROXY) {
 }
 
 // Session cookie should be secure ONLY when you're serving the site over HTTPS.
-// For IP:port HTTP testing, keep this false.
+// For IP:port HTTP testing, set SESSION_COOKIE_SECURE=false in .env.
 const SESSION_COOKIE_SECURE = process.env.SESSION_COOKIE_SECURE === 'true';
 
 // Middleware
 app.use(cors({
+  // In production, we serve frontend + API from the same origin, so CORS isn't needed.
+  // Keeping it permissive here is fine (false disables CORS headers).
   origin: NODE_ENV === 'production' ? false : 'http://localhost:5173',
-  credentials: true
+  credentials: true,
 }));
+
 app.use(express.json());
 app.use(cookieParser());
+
 app.use(session({
+  name: 'esensi.sid',
   secret: process.env.SESSION_SECRET || 'esensi-dashboard-secret-change-in-production',
   resave: false,
   saveUninitialized: false,
+  proxy: TRUST_PROXY,
   cookie: {
     secure: SESSION_COOKIE_SECURE,
     httpOnly: true,
     sameSite: 'lax',
-    maxAge: 24 * 60 * 60 * 1000 // 24 hours
-  }
+    maxAge: 24 * 60 * 60 * 1000, // 24 hours
+  },
 }));
 
 // Health check endpoint
 app.get('/health', (req, res) => {
-  res.json({ status: 'ok', environment: NODE_ENV });
+  res.json({
+    status: 'ok',
+    environment: NODE_ENV,
+    trustProxy: TRUST_PROXY,
+    sessionCookieSecure: SESSION_COOKIE_SECURE,
+  });
 });
 
 // API Routes
@@ -64,7 +75,7 @@ if (NODE_ENV === 'production') {
   app.use(express.static(distPath));
 
   // SPA fallback: serve index.html for all non-API routes.
-  // Use a regex route to avoid Express 5 wildcard path-to-regexp issues.
+  // Regex avoids Express 5 wildcard path-to-regexp issues.
   app.get(/^(?!\/api\/).*/, (req, res) => {
     res.sendFile(path.join(distPath, 'index.html'));
   });
@@ -73,4 +84,6 @@ if (NODE_ENV === 'production') {
 app.listen(PORT, () => {
   console.log(`🚀 Esensi Dashboard server running on port ${PORT}`);
   console.log(`📊 Environment: ${NODE_ENV}`);
+  console.log(`🔐 trust proxy: ${TRUST_PROXY}`);
+  console.log(`🍪 session cookie secure: ${SESSION_COOKIE_SECURE}`);
 });
