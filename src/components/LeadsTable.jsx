@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import api from '../lib/api';
 
-export default function LeadsTable() {
+export default function LeadsTable({ filters = {} }) {
   const [leads, setLeads] = useState([]);
   const [pagination, setPagination] = useState({
     page: 1,
@@ -13,13 +13,13 @@ export default function LeadsTable() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    loadLeads(pagination.page);
-  }, []);
+    loadLeads(1); // Reset to page 1 when filters change
+  }, [filters]);
 
   const loadLeads = async (page) => {
     try {
       setLoading(true);
-      const data = await api.getRecentLeads(page, pagination.pageSize);
+      const data = await api.getRecentLeads(page, pagination.pageSize, filters);
       setLeads(data.leads);
       setPagination(data.pagination);
     } catch (err) {

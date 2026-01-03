@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
+import FilterBar from '../components/FilterBar';
 import KPICard from '../components/KPICard';
 import LeadsChart from '../components/LeadsChart';
 import LeadsTable from '../components/LeadsTable';
@@ -11,6 +12,7 @@ export default function Dashboard() {
   const [kpiLoading, setKpiLoading] = useState(true);
   const [kpiError, setKpiError] = useState(null);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [activeFilters, setActiveFilters] = useState({});
 
   // Update time every minute
   useEffect(() => {
@@ -20,21 +22,25 @@ export default function Dashboard() {
     return () => clearInterval(timer);
   }, []);
 
-  // Load KPI data
+  // Load KPI data when filters change
   useEffect(() => {
     loadKPIData();
-  }, []);
+  }, [activeFilters]);
 
   const loadKPIData = async () => {
     try {
       setKpiLoading(true);
-      const data = await api.getKPISummary();
+      const data = await api.getKPISummary(activeFilters);
       setKpiData(data);
     } catch (err) {
       setKpiError(err.message);
     } finally {
       setKpiLoading(false);
     }
+  };
+
+  const handleFilterChange = (filters) => {
+    setActiveFilters(filters);
   };
 
   const formatDateTime = (date) => {
@@ -76,6 +82,8 @@ export default function Dashboard() {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Filter Bar */}
+        <FilterBar onFilterChange={handleFilterChange} />
         {/* KPI Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <KPICard
@@ -110,12 +118,12 @@ export default function Dashboard() {
 
         {/* Chart */}
         <div className="mb-8">
-          <LeadsChart />
+          <LeadsChart filters={activeFilters} />
         </div>
 
         {/* Table */}
         <div>
-          <LeadsTable />
+          <LeadsTable filters={activeFilters} />
         </div>
       </main>
     </div>

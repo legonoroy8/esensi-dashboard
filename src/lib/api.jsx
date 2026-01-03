@@ -80,6 +80,15 @@ class ApiClient {
     });
     return this.request(`/api/table/recent-leads?${params}`);
   }
+
+  // Filter endpoints
+  async getClients() {
+    return this.request('/api/filters/clients');
+  }
+
+  async getSalesReps() {
+    return this.request('/api/filters/sales-reps');
+  }
 }
 
 export default new ApiClient();

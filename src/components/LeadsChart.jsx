@@ -27,19 +27,19 @@ ChartJS.register(
   Filler
 );
 
-export default function LeadsChart() {
+export default function LeadsChart({ filters = {} }) {
   const [chartData, setChartData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
     loadChartData();
-  }, []);
+  }, [filters]);
 
   const loadChartData = async () => {
     try {
       setLoading(true);
-      const data = await api.getLeadsOverTime();
+      const data = await api.getLeadsOverTime(filters);
       
       setChartData({
         labels: data.labels,

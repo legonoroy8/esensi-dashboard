@@ -10,6 +10,7 @@ import authRoutes from './routes/auth.js';
 import kpiRoutes from './routes/kpi.js';
 import chartRoutes from './routes/chart.js';
 import tableRoutes from './routes/table.js';
+import filterRoutes from './routes/filters.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -68,6 +69,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/kpi', kpiRoutes);
 app.use('/api/chart', chartRoutes);
 app.use('/api/table', tableRoutes);
+app.use('/api/filters', filterRoutes);
 
 // Serve static files in production
 if (NODE_ENV === 'production') {
