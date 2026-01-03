@@ -1,6 +1,8 @@
 // Centralized API client for Esensi Dashboard
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+//
+// In production the frontend is served by the same Express app, so API calls should be same-origin.
+// In development, Vite proxies /api to the backend (see vite.config.js).
+const API_BASE_URL = import.meta.env.VITE_API_URL || '';
 
 class ApiClient {
   async request(endpoint, options = {}) {
