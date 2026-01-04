@@ -20,6 +20,9 @@ services:
       # Application
       - PORT=3000
       - NODE_ENV=production
+      # HTTPS Settings
+      - TRUST_PROXY=1
+      - SESSION_COOKIE_SECURE=true
     ports:
       # For testing without Traefik - access via http://localhost:8085
       - "8085:3000"
@@ -29,10 +32,9 @@ services:
       - traefik_proxy
     labels:
       - "traefik.enable=true"
-      # TODO: replace TBD_DOMAIN with real domain when available
-      - "traefik.http.routers.esensi-dashboard.rule=Host(`TBD_DOMAIN`)"
+      - "traefik.http.routers.esensi-dashboard.rule=Host(`dashboard.srv1232821.hstgr.cloud`)"
       - "traefik.http.routers.esensi-dashboard.entrypoints=websecure"
-      - "traefik.http.routers.esensi-dashboard.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.esensi-dashboard.tls.certresolver=mytlschallenge"
       - "traefik.http.services.esensi-dashboard.loadbalancer.server.port=3000"
 
 networks:
