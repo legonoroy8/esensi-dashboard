@@ -17,6 +17,7 @@ services:
       # TODO: replace TBD_DOMAIN with real domain when available
       - "traefik.http.routers.esensi-dashboard.rule=Host(`dashboard.srv1232821.hstgr.cloud`)"
       - "traefik.http.routers.esensi-dashboard.entrypoints=websecure"
+      - "traefik.http.routers.esensi-dashboard.tls=true"
       - "traefik.http.routers.esensi-dashboard.tls.certresolver=mytlschallenge"
       - "traefik.http.services.esensi-dashboard.loadbalancer.server.port=3000"
 
