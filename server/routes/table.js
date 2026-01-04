@@ -13,7 +13,7 @@ router.get('/recent-leads', async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const pageSize = parseInt(req.query.page_size) || 20;
     const offset = (page - 1) * pageSize;
-    const { client_id, sales_rep_id, start_date, end_date } = req.query;
+    const { client_id, sales_rep_id, start_date, end_date, search } = req.query;
 
     // Build WHERE conditions
     const conditions = [];
@@ -44,19 +44,31 @@ router.get('/recent-leads', async (req, res) => {
       paramIndex++;
     }
 
+    if (search) {
+      conditions.push(`(
+        l.full_name ILIKE $${paramIndex} OR
+        l.whatsapp ILIKE $${paramIndex} OR
+        l.interest ILIKE $${paramIndex} OR
+        c.name ILIKE $${paramIndex}
+      )`);
+      params.push(`%${search}%`);
+      paramIndex++;
+    }
+
     const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
     // Get total count for pagination
     const countQuery = `
       SELECT COUNT(*) as total
       FROM public.leads l
+      JOIN public.clients c ON c.id = l.client_id
       ${whereClause}
     `;
     const countResult = await pool.query(countQuery, params);
     const total = parseInt(countResult.rows[0].total);
     const totalPages = Math.ceil(total / pageSize);
 
-    // Get paginated leads with all required columns
+    // Get paginated leads with all required columns including lead_events timestamps
     const leadsQuery = `
       SELECT
         l.id,
@@ -65,10 +77,13 @@ router.get('/recent-leads', async (req, res) => {
         l.whatsapp,
         l.interest,
         c.name AS client_name,
-        sr.name AS sales_rep_name
+        sr.name AS sales_rep_name,
+        le.ai_report_sent_at,
+        le.sales_rep_replied_at
       FROM public.leads l
       JOIN public.clients c ON c.id = l.client_id
       LEFT JOIN public.sales_reps sr ON sr.id = l.sales_rep_id
+      LEFT JOIN public.lead_events le ON le.lead_id = l.id
       ${whereClause}
       ORDER BY l.created_at DESC
       LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
@@ -94,7 +109,25 @@ router.get('/recent-leads', async (req, res) => {
       whatsapp: lead.whatsapp,
       interest: lead.interest,
       client_name: lead.client_name,
-      sales_rep_name: lead.sales_rep_name || 'Unassigned'
+      sales_rep_name: lead.sales_rep_name || 'Unassigned',
+      ai_report_sent_at: lead.ai_report_sent_at 
+        ? new Date(lead.ai_report_sent_at).toLocaleString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+          })
+        : 'N/A',
+      sales_rep_replied_at: lead.sales_rep_replied_at
+        ? new Date(lead.sales_rep_replied_at).toLocaleString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+          })
+        : 'N/A'
     }));
 
     res.json({
