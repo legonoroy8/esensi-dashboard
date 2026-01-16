@@ -53,23 +53,27 @@ function buildExportQuery(filters) {
 
   const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
+  // Use DISTINCT ON to ensure only one row per lead (handles duplicate lead_events)
   const query = `
-    SELECT
-      l.id,
-      l.created_at,
-      l.full_name,
-      l.whatsapp,
-      l.interest,
-      c.name AS client_name,
-      sr.name AS sales_rep_name,
-      le.ai_report_sent_at,
-      le.sales_rep_replied_at
-    FROM public.leads l
-    JOIN public.clients c ON c.id = l.client_id
-    LEFT JOIN public.sales_reps sr ON sr.id = l.sales_rep_id
-    LEFT JOIN public.lead_events le ON le.lead_id = l.id
-    ${whereClause}
-    ORDER BY l.created_at DESC
+    SELECT * FROM (
+      SELECT DISTINCT ON (l.id)
+        l.id,
+        l.created_at,
+        l.full_name,
+        l.whatsapp,
+        l.interest,
+        c.name AS client_name,
+        sr.name AS sales_rep_name,
+        le.ai_report_sent_at,
+        le.sales_rep_replied_at
+      FROM public.leads l
+      JOIN public.clients c ON c.id = l.client_id
+      LEFT JOIN public.sales_reps sr ON sr.id = l.sales_rep_id
+      LEFT JOIN public.lead_events le ON le.lead_id = l.id
+      ${whereClause}
+      ORDER BY l.id, le.occurred_at DESC NULLS LAST
+    ) AS unique_leads
+    ORDER BY created_at DESC
   `;
 
   return { query, params };
@@ -83,7 +87,8 @@ function formatDate(date) {
     month: 'short',
     day: 'numeric',
     hour: '2-digit',
-    minute: '2-digit'
+    minute: '2-digit',
+    timeZone: 'Asia/Jakarta'
   });
 }
 

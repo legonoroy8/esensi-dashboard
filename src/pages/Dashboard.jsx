@@ -64,6 +64,7 @@ export default function Dashboard() {
             <div>
               <h1 className="text-2xl font-bold text-slate-800">Esensi Lead Dashboard</h1>
               <p className="text-sm text-slate-600 mt-1">{formatDateTime(currentTime)}</p>
+              <p className="text-xs text-slate-500 mt-0.5">All times displayed in WIB (Western Indonesia Time, UTC+7)</p>
             </div>
             <div className="flex items-center space-x-4">
               <span className="text-sm text-slate-600">

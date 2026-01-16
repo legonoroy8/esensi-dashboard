@@ -107,7 +107,8 @@ router.get('/recent-leads', async (req, res) => {
         month: 'short',
         day: 'numeric',
         hour: '2-digit',
-        minute: '2-digit'
+        minute: '2-digit',
+        timeZone: 'Asia/Jakarta'
       }),
       full_name: lead.full_name,
       whatsapp: lead.whatsapp,
@@ -120,7 +121,8 @@ router.get('/recent-leads', async (req, res) => {
             month: 'short',
             day: 'numeric',
             hour: '2-digit',
-            minute: '2-digit'
+            minute: '2-digit',
+            timeZone: 'Asia/Jakarta'
           })
         : 'N/A',
       sales_rep_replied_at: lead.sales_rep_replied_at
@@ -129,7 +131,8 @@ router.get('/recent-leads', async (req, res) => {
             month: 'short',
             day: 'numeric',
             hour: '2-digit',
-            minute: '2-digit'
+            minute: '2-digit',
+            timeZone: 'Asia/Jakarta'
           })
         : 'N/A'
     }));
