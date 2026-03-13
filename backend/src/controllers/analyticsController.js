@@ -78,8 +78,8 @@ export const getAnalytics = async (req, res, next) => {
       AND ${whereClause}
     `;
     const avgClaimResult = await query(avgClaimQuery, params);
-    const avgSeconds = avgClaimResult.rows[0].avg_seconds || 0;
-    const avgClaimTime = formatDuration(avgSeconds);
+    const avgSeconds = parseFloat(avgClaimResult.rows[0].avg_seconds) || 0;
+    const avgClaimTimeMinutes = avgSeconds / 60; // Convert to minutes
 
     // Slow claims count (>30 minutes)
     const slowClaimQuery = `
@@ -91,11 +91,11 @@ export const getAnalytics = async (req, res, next) => {
 
     res.json({
       qualifiedLeads: parseInt(qualifiedResult.rows[0].count),
-      coldCallLeads: parseInt(coldCallResult.rows[0].count),
+      coldCalls: parseInt(coldCallResult.rows[0].count),
       totalLeads: parseInt(totalResult.rows[0].count),
       leadsBySource,
-      avgClaimTime,
-      slowClaimCount: parseInt(slowClaimResult.rows[0].count)
+      avgClaimTimeMinutes,
+      slowClaims: parseInt(slowClaimResult.rows[0].count)
     });
   } catch (error) {
     next(error);
