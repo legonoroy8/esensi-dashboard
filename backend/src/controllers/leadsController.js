@@ -63,11 +63,13 @@ export const getLeads = async (req, res, next) => {
         l.created_at,
         l.qualified_at,
         l.claimed_at,
+        c.name as client_name,
         EXTRACT(EPOCH FROM (l.claimed_at - l.qualified_at)) as claim_duration_seconds,
         sr.id as sales_rep_id,
         sr.name as sales_rep_name,
         sr.whatsapp as sales_rep_whatsapp
       FROM leads l
+      LEFT JOIN clients c ON l.client_id = c.id
       LEFT JOIN sales_reps sr ON l.claimed_by = sr.id
       WHERE ${whereClause}
       ORDER BY l.created_at DESC
@@ -77,7 +79,7 @@ export const getLeads = async (req, res, next) => {
 
     const dataResult = await query(dataQuery, params);
 
-    const data = dataResult.rows.map(row => ({
+    const leads = dataResult.rows.map(row => ({
       id: row.id,
       whatsapp: row.whatsapp,
       name: row.name,
@@ -87,6 +89,8 @@ export const getLeads = async (req, res, next) => {
       created_at: row.created_at,
       qualified_at: row.qualified_at,
       claimed_at: row.claimed_at,
+      client_name: row.client_name,
+      claimed_by: row.sales_rep_name || null,
       sales_rep: row.sales_rep_id ? {
         id: row.sales_rep_id,
         name: row.sales_rep_name,
@@ -100,12 +104,12 @@ export const getLeads = async (req, res, next) => {
     const pages = Math.ceil(total / parseInt(limit));
 
     res.json({
-      data,
+      leads,
       pagination: {
         total,
         page: parseInt(page),
         limit: parseInt(limit),
-        pages
+        totalPages: pages
       }
     });
   } catch (error) {
