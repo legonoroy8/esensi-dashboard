@@ -4,28 +4,38 @@ export const getAnalytics = async (req, res, next) => {
   try {
     const { client_id, sales_rep_id, start_date, end_date } = req.query;
 
-    if (!client_id) {
-      return res.status(400).json({ error: 'client_id is required' });
+    // Build dynamic WHERE clause based on provided filters
+    // Support for multi-tenant: if client_id provided, filter by it; otherwise show all
+    const whereClauses = [];
+    const params = [];
+    let paramIndex = 1;
+
+    // Date range filter (always applied)
+    whereClauses.push(`created_at >= $${paramIndex}`);
+    params.push(start_date || '1970-01-01');
+    paramIndex++;
+
+    whereClauses.push(`created_at <= $${paramIndex}`);
+    params.push(end_date || '2099-12-31');
+    paramIndex++;
+
+    // Optional client filter (for multi-tenant support)
+    if (client_id) {
+      whereClauses.push(`client_id = $${paramIndex}`);
+      params.push(client_id);
+      paramIndex++;
     }
 
-    const baseWhere = `
-      client_id = $1 
-      AND created_at >= $2 
-      AND created_at <= $3
-    `;
-    const baseParams = [
-      client_id,
-      start_date || '1970-01-01',
-      end_date || '2099-12-31'
-    ];
+    // Optional sales rep filter
+    if (sales_rep_id) {
+      whereClauses.push(`claimed_by = $${paramIndex}`);
+      params.push(sales_rep_id);
+      paramIndex++;
+    }
 
-    // If sales_rep_id filter is provided, add it
-    const whereClause = sales_rep_id 
-      ? `${baseWhere} AND claimed_by = $4`
-      : baseWhere;
-    const params = sales_rep_id 
-      ? [...baseParams, sales_rep_id]
-      : baseParams;
+    const whereClause = whereClauses.length > 0 
+      ? whereClauses.join(' AND ')
+      : '1=1';
 
     // Qualified leads count
     const qualifiedQuery = `

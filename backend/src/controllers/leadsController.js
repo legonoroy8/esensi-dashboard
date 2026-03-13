@@ -11,22 +11,40 @@ export const getLeads = async (req, res, next) => {
       limit = 50
     } = req.query;
 
-    if (!client_id) {
-      return res.status(400).json({ error: 'client_id is required' });
-    }
-
     const offset = (parseInt(page) - 1) * parseInt(limit);
 
-    // Build WHERE clause
-    let whereClause = `l.client_id = $1 AND l.created_at >= $2 AND l.created_at <= $3`;
-    let params = [client_id, start_date || '1970-01-01', end_date || '2099-12-31'];
-    let paramIndex = 4;
+    // Build dynamic WHERE clause based on provided filters
+    // Support for multi-tenant: if client_id provided, filter by it; otherwise show all
+    const whereClauses = [];
+    const params = [];
+    let paramIndex = 1;
 
+    // Date range filter (always applied)
+    whereClauses.push(`l.created_at >= $${paramIndex}`);
+    params.push(start_date || '1970-01-01');
+    paramIndex++;
+
+    whereClauses.push(`l.created_at <= $${paramIndex}`);
+    params.push(end_date || '2099-12-31');
+    paramIndex++;
+
+    // Optional client filter (for multi-tenant support)
+    if (client_id) {
+      whereClauses.push(`l.client_id = $${paramIndex}`);
+      params.push(client_id);
+      paramIndex++;
+    }
+
+    // Optional sales rep filter
     if (sales_rep_id) {
-      whereClause += ` AND l.claimed_by = $${paramIndex}`;
+      whereClauses.push(`l.claimed_by = $${paramIndex}`);
       params.push(sales_rep_id);
       paramIndex++;
     }
+
+    const whereClause = whereClauses.length > 0 
+      ? whereClauses.join(' AND ')
+      : '1=1';
 
     // Get total count
     const countQuery = `SELECT COUNT(*) as total FROM leads l WHERE ${whereClause}`;
