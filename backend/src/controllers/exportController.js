@@ -4,18 +4,37 @@ export const exportCSV = async (req, res, next) => {
   try {
     const { client_id, sales_rep_id, start_date, end_date } = req.query;
 
-    if (!client_id) {
-      return res.status(400).json({ error: 'client_id is required' });
+    // Build dynamic WHERE clause (same pattern as leads/analytics)
+    const whereClauses = [];
+    const params = [];
+    let paramIndex = 1;
+
+    // Date range filter
+    whereClauses.push(`l.created_at >= $${paramIndex}`);
+    params.push(start_date || '1970-01-01');
+    paramIndex++;
+
+    whereClauses.push(`l.created_at <= $${paramIndex}`);
+    params.push(end_date || '2099-12-31');
+    paramIndex++;
+
+    // Optional client filter
+    if (client_id) {
+      whereClauses.push(`l.client_id = $${paramIndex}`);
+      params.push(client_id);
+      paramIndex++;
     }
 
-    // Build WHERE clause (same as leads controller)
-    let whereClause = `l.client_id = $1 AND l.created_at >= $2 AND l.created_at <= $3`;
-    let params = [client_id, start_date || '1970-01-01', end_date || '2099-12-31'];
-
+    // Optional sales rep filter
     if (sales_rep_id) {
-      whereClause += ` AND l.claimed_by = $4`;
+      whereClauses.push(`l.claimed_by = $${paramIndex}`);
       params.push(sales_rep_id);
+      paramIndex++;
     }
+
+    const whereClause = whereClauses.length > 0 
+      ? whereClauses.join(' AND ')
+      : '1=1';
 
     // Query all matching leads (no pagination for export)
     const dataQuery = `
