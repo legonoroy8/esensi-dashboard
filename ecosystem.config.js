@@ -12,6 +12,11 @@ module.exports = {
         NODE_ENV: 'production',
         PORT: 3001,
       },
+      // Project-specific log files
+      error_file: '~/taktis/logs/lq-dashboard/error.log',
+      out_file: '~/taktis/logs/lq-dashboard/out.log',
+      log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
+      merge_logs: true,
     },
   ],
 };
