@@ -89,7 +89,7 @@ function Filters() {
           >
             <option value="">All Status</option>
             <option value="cold_call">Cold Call</option>
-            <option value="qualified_unclaimed">Qualified</option>
+            <option value="qualified_unclaimed">Qualified Unclaimed</option>
             <option value="claimed">Claimed</option>
           </select>
         </div>
