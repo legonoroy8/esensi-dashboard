@@ -67,6 +67,9 @@ function LeadsTable() {
                 Source
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                First Message
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
                 Status
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
@@ -83,7 +86,7 @@ function LeadsTable() {
           <tbody className="divide-y divide-gray-800">
             {leads.length === 0 ? (
               <tr>
-                <td colSpan="7" className="px-6 py-8 text-center text-gray-400">
+                <td colSpan="8" className="px-6 py-8 text-center text-gray-400">
                   No leads found
                 </td>
               </tr>
@@ -96,6 +99,9 @@ function LeadsTable() {
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-300">{lead.client_name}</td>
                   <td className="px-6 py-4">{getSourceBadge(lead.source)}</td>
+                  <td className="px-6 py-4 text-sm text-gray-300 max-w-xs truncate" title={lead.first_msg}>
+                    {lead.first_msg || '-'}
+                  </td>
                   <td className="px-6 py-4">{getStatusBadge(lead.status)}</td>
                   <td className="px-6 py-4 text-sm text-gray-300">{lead.claimed_by || '-'}</td>
                   <td className="px-6 py-4 text-sm text-gray-300">{formatDate(lead.created_at)}</td>

@@ -2,7 +2,7 @@ import { query } from '../config/database.js';
 
 export const getAnalytics = async (req, res, next) => {
   try {
-    const { client_id, sales_rep_id, start_date, end_date } = req.query;
+    const { client_id, sales_rep_id, status, source, start_date, end_date } = req.query;
 
     // Build dynamic WHERE clause based on provided filters
     // Support for multi-tenant: if client_id provided, filter by it; otherwise show all
@@ -33,7 +33,21 @@ export const getAnalytics = async (req, res, next) => {
       paramIndex++;
     }
 
-    const whereClause = whereClauses.length > 0 
+    // Optional status filter
+    if (status) {
+      whereClauses.push(`status = $${paramIndex}`);
+      params.push(status);
+      paramIndex++;
+    }
+
+    // Optional source filter
+    if (source) {
+      whereClauses.push(`source = $${paramIndex}`);
+      params.push(source);
+      paramIndex++;
+    }
+
+    const whereClause = whereClauses.length > 0
       ? whereClauses.join(' AND ')
       : '1=1';
 

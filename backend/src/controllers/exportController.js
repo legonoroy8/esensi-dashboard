@@ -2,7 +2,7 @@ import { query } from '../config/database.js';
 
 export const exportCSV = async (req, res, next) => {
   try {
-    const { client_id, sales_rep_id, start_date, end_date } = req.query;
+    const { client_id, sales_rep_id, status, source, start_date, end_date } = req.query;
 
     // Build dynamic WHERE clause (same pattern as leads/analytics)
     const whereClauses = [];
@@ -32,7 +32,21 @@ export const exportCSV = async (req, res, next) => {
       paramIndex++;
     }
 
-    const whereClause = whereClauses.length > 0 
+    // Optional status filter
+    if (status) {
+      whereClauses.push(`l.status = $${paramIndex}`);
+      params.push(status);
+      paramIndex++;
+    }
+
+    // Optional source filter
+    if (source) {
+      whereClauses.push(`l.source = $${paramIndex}`);
+      params.push(source);
+      paramIndex++;
+    }
+
+    const whereClause = whereClauses.length > 0
       ? whereClauses.join(' AND ')
       : '1=1';
 
@@ -43,6 +57,7 @@ export const exportCSV = async (req, res, next) => {
         l.name,
         l.whatsapp,
         l.source,
+        l.first_msg,
         l.status,
         l.created_at,
         l.qualified_at,
@@ -76,6 +91,7 @@ function generateCSV(rows) {
     'Name',
     'WhatsApp',
     'Source',
+    'First Message',
     'Status',
     'Created',
     'Qualified',
@@ -92,6 +108,7 @@ function generateCSV(rows) {
       escapeCSV(row.name || ''),
       escapeCSV(row.whatsapp),
       escapeCSV(row.source),
+      escapeCSV(row.first_msg || ''),
       escapeCSV(row.status),
       escapeCSV(formatDate(row.created_at)),
       escapeCSV(formatDate(row.qualified_at)),
@@ -124,4 +141,98 @@ function formatDuration(seconds) {
   const minutes = Math.floor((seconds % 3600) / 60);
   const secs = Math.floor(seconds % 60);
   return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+}
+
+// Export cold call list
+export const exportColdCallList = async (req, res, next) => {
+  try {
+    const { client_id, start_date, end_date } = req.query;
+
+    // Build WHERE clause for cold call list
+    const whereClauses = ['l.status = $1']; // Always filter by cold_call status
+    const params = ['cold_call'];
+    let paramIndex = 2;
+
+    // Date range filter
+    whereClauses.push(`l.created_at >= $${paramIndex}`);
+    params.push(start_date || '1970-01-01');
+    paramIndex++;
+
+    whereClauses.push(`l.created_at <= $${paramIndex}`);
+    params.push(end_date || '2099-12-31');
+    paramIndex++;
+
+    // Optional client filter
+    if (client_id) {
+      whereClauses.push(`l.client_id = $${paramIndex}`);
+      params.push(client_id);
+      paramIndex++;
+    }
+
+    const whereClause = whereClauses.join(' AND ');
+
+    // Query cold call leads
+    const dataQuery = `
+      SELECT 
+        l.name,
+        l.whatsapp,
+        l.source,
+        l.interest,
+        l.status,
+        TO_CHAR((l.created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Jakarta'), 'YYYY-MM-DD HH24:MI:SS') as created_at_jakarta,
+        c.name as client_name
+      FROM leads l
+      LEFT JOIN clients c ON l.client_id = c.id
+      WHERE ${whereClause}
+      ORDER BY l.created_at DESC
+    `;
+
+    const result = await query(dataQuery, params);
+
+    // Generate CSV for cold call list
+    const csv = generateColdCallCSV(result.rows);
+
+    // Set response headers
+    const filename = `cold-call-list-${new Date().toISOString().split('T')[0]}.csv`;
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.send(csv);
+  } catch (error) {
+    next(error);
+  }
+};
+
+function generateColdCallCSV(rows) {
+  const headers = [
+    'Name',
+    'WhatsApp',
+    'Source',
+    'Interest',
+    'Status',
+    'Created At (Asia/Jakarta)',
+    'Client'
+  ];
+
+  const csvRows = [headers.join(',')];
+
+  for (const row of rows) {
+    const values = [
+      escapeCSV(row.name || ''),
+      escapeCSV(row.whatsapp),
+      escapeCSV(row.source),
+      escapeCSV(row.interest || ''),
+      escapeCSV(row.status),
+      escapeCSV(formatDateJakarta(row.created_at_jakarta)),
+      escapeCSV(row.client_name || '')
+    ];
+    csvRows.push(values.join(','));
+  }
+
+  return csvRows.join('\n');
+}
+
+function formatDateJakarta(date) {
+  if (!date) return '';
+  // Date is already formatted as a string in Jakarta timezone from SQL query
+  return date;
 }

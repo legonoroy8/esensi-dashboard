@@ -9,7 +9,8 @@ function Filters() {
     salesReps, 
     setFilter, 
     fetchSalesReps,
-    exportCSV 
+    exportCSV,
+    exportColdCallList 
   } = useDashboardStore();
 
   useEffect(() => {
@@ -25,7 +26,7 @@ function Filters() {
         <h2 className="text-lg font-semibold text-white">Filters</h2>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-300 mb-2">Client</label>
           <select
@@ -78,9 +79,43 @@ function Filters() {
             className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-taktis-primary"
           />
         </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-300 mb-2">Status</label>
+          <select
+            value={filters.status || ''}
+            onChange={(e) => setFilter('status', e.target.value || null)}
+            className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-taktis-primary"
+          >
+            <option value="">All Status</option>
+            <option value="cold_call">Cold Call</option>
+            <option value="qualified_unclaimed">Qualified</option>
+            <option value="claimed">Claimed</option>
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-300 mb-2">Source</label>
+          <select
+            value={filters.source || ''}
+            onChange={(e) => setFilter('source', e.target.value || null)}
+            className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-taktis-primary"
+          >
+            <option value="">All Sources</option>
+            <option value="instagram">Instagram</option>
+            <option value="google">Google</option>
+          </select>
+        </div>
       </div>
 
-      <div className="mt-4 flex justify-end">
+      <div className="mt-4 flex justify-end gap-3">
+        <button
+          onClick={exportColdCallList}
+          className="flex items-center gap-2 px-4 py-2 bg-taktis-accent2 hover:bg-taktis-accent2/90 text-white rounded-lg transition"
+        >
+          <Download size={18} />
+          <span>Export Cold Call List</span>
+        </button>
         <button
           onClick={exportCSV}
           className="flex items-center gap-2 px-4 py-2 bg-taktis-primary hover:bg-taktis-primary/90 text-white rounded-lg transition"

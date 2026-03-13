@@ -5,6 +5,8 @@ export const getLeads = async (req, res, next) => {
     const { 
       client_id, 
       sales_rep_id, 
+      status,
+      source,
       start_date, 
       end_date,
       page = 1,
@@ -42,7 +44,21 @@ export const getLeads = async (req, res, next) => {
       paramIndex++;
     }
 
-    const whereClause = whereClauses.length > 0 
+    // Optional status filter
+    if (status) {
+      whereClauses.push(`l.status = $${paramIndex}`);
+      params.push(status);
+      paramIndex++;
+    }
+
+    // Optional source filter
+    if (source) {
+      whereClauses.push(`l.source = $${paramIndex}`);
+      params.push(source);
+      paramIndex++;
+    }
+
+    const whereClause = whereClauses.length > 0
       ? whereClauses.join(' AND ')
       : '1=1';
 
@@ -60,6 +76,7 @@ export const getLeads = async (req, res, next) => {
         l.interest,
         l.status,
         l.source,
+        l.first_msg,
         l.created_at,
         l.qualified_at,
         l.claimed_at,
@@ -86,6 +103,7 @@ export const getLeads = async (req, res, next) => {
       interest: row.interest,
       status: row.status,
       source: row.source,
+      first_msg: row.first_msg,
       created_at: row.created_at,
       qualified_at: row.qualified_at,
       claimed_at: row.claimed_at,

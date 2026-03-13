@@ -6,6 +6,8 @@ const useDashboardStore = create((set, get) => ({
   filters: {
     clientId: null,
     salesRepId: null,
+    status: null,
+    source: null,
     startDate: null,
     endDate: null,
   },
@@ -78,6 +80,8 @@ const useDashboardStore = create((set, get) => ({
       const params = new URLSearchParams();
       if (filters.clientId) params.append('clientId', filters.clientId);
       if (filters.salesRepId) params.append('salesRepId', filters.salesRepId);
+      if (filters.status) params.append('status', filters.status);
+      if (filters.source) params.append('source', filters.source);
       if (filters.startDate) params.append('startDate', filters.startDate);
       if (filters.endDate) params.append('endDate', filters.endDate);
       
@@ -97,6 +101,8 @@ const useDashboardStore = create((set, get) => ({
       const params = new URLSearchParams({ page: currentPage, limit: 50 });
       if (filters.clientId) params.append('clientId', filters.clientId);
       if (filters.salesRepId) params.append('salesRepId', filters.salesRepId);
+      if (filters.status) params.append('status', filters.status);
+      if (filters.source) params.append('source', filters.source);
       if (filters.startDate) params.append('startDate', filters.startDate);
       if (filters.endDate) params.append('endDate', filters.endDate);
       
@@ -115,6 +121,8 @@ const useDashboardStore = create((set, get) => ({
       const params = new URLSearchParams();
       if (filters.clientId) params.append('clientId', filters.clientId);
       if (filters.salesRepId) params.append('salesRepId', filters.salesRepId);
+      if (filters.status) params.append('status', filters.status);
+      if (filters.source) params.append('source', filters.source);
       if (filters.startDate) params.append('startDate', filters.startDate);
       if (filters.endDate) params.append('endDate', filters.endDate);
       
@@ -133,6 +141,32 @@ const useDashboardStore = create((set, get) => ({
       window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error('Failed to export CSV:', error);
+    }
+  },
+
+  exportColdCallList: async () => {
+    try {
+      const { filters } = get();
+      const params = new URLSearchParams();
+      if (filters.clientId) params.append('clientId', filters.clientId);
+      if (filters.startDate) params.append('startDate', filters.startDate);
+      if (filters.endDate) params.append('endDate', filters.endDate);
+      
+      const { data } = await api.get(`/export/cold-call-list?${params}`, {
+        responseType: 'blob',
+      });
+      
+      const blob = new Blob([data], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `cold-call-list-${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Failed to export cold call list:', error);
     }
   },
 }));
