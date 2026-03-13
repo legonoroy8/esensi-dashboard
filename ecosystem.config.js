@@ -1,7 +1,7 @@
 module.exports = {
   apps: [
     {
-      name: 'lq-backend',
+      name: 'leadsqualifier-backend',
       cwd: './backend',
       script: 'src/server.js',
       instances: 1,
@@ -13,8 +13,8 @@ module.exports = {
         PORT: 3001,
       },
       // Project-specific log files
-      error_file: '~/taktis/logs/lq-dashboard/error.log',
-      out_file: '~/taktis/logs/lq-dashboard/out.log',
+      error_file: '~/taktis/logs/leadsqualifier-dashboard/error.log',
+      out_file: '~/taktis/logs/leadsqualifier-dashboard/out.log',
       log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
       merge_logs: true,
     },
